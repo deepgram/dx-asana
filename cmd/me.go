@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/TheCoolRobot/asana-cli/internal/asana"
 	"github.com/TheCoolRobot/asana-cli/internal/ui"
@@ -19,7 +20,7 @@ var meCmd = &cobra.Command{
 			if jsonOutput {
 				ui.PrintJSON(nil, err)
 			} else {
-				fmt.Println("Error:", err)
+				fmt.Fprintln(os.Stderr, "Error:", err)
 			}
 			return err
 		}

@@ -2,13 +2,14 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/TheCoolRobot/asana-cli/internal/asana"
 	"github.com/TheCoolRobot/asana-cli/internal/config"
 	"github.com/TheCoolRobot/asana-cli/internal/ui"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -56,7 +57,7 @@ var listCmd = &cobra.Command{
 			if jsonOutput {
 				ui.PrintJSON(nil, err)
 			} else {
-				fmt.Println("Error:", err)
+				fmt.Fprintln(os.Stderr, "Error:", err)
 			}
 			return err
 		}

@@ -19,10 +19,12 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:     "asana-cli",
-	Short:   "Asana CLI - Beautiful task management",
-	Long:    "A feature-rich CLI for managing Asana tasks with TUI and sync daemon",
-	Version: Version,
+	Use:           "asana-cli",
+	Short:         "Asana CLI - Beautiful task management",
+	Long:          "A feature-rich CLI for managing Asana tasks with TUI and sync daemon",
+	Version:       Version,
+	SilenceUsage:  true,
+	SilenceErrors: true,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		if token == "" {
 			token = config.GetAPIToken()

@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
-	"github.com/spf13/cobra"
 	"github.com/TheCoolRobot/asana-cli/internal/config"
 	"github.com/TheCoolRobot/asana-cli/internal/ui"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -59,7 +60,7 @@ var configSetCmd = &cobra.Command{
 		if setToken != "" {
 			cfg.APIToken = setToken
 		}
-		
+
 		if setWorkspace != "" {
 			cfg.DefaultWorkspace = setWorkspace
 		}
@@ -69,7 +70,7 @@ var configSetCmd = &cobra.Command{
 			if jsonOutput {
 				ui.PrintJSON(nil, err)
 			} else {
-				fmt.Println("Error:", err)
+				fmt.Fprintln(os.Stderr, "Error:", err)
 			}
 			return err
 		}
@@ -161,7 +162,7 @@ var projectListCmd = &cobra.Command{
 
 		if jsonOutput {
 			meta := map[string]interface{}{
-				"count":            len(projects),
+				"count":           len(projects),
 				"current_project": cfg.CurrentProject,
 			}
 			ui.PrintJSONWithMeta(projects, meta, nil)
@@ -225,7 +226,7 @@ func init() {
 
 	configSetCmd.Flags().StringVar(&setToken, "token", "", "API token")
 	configSetCmd.Flags().StringVar(&setWorkspace, "workspace", "", "Default workspace ID")
-	configSetCmd.Flags().StringVar(&setName, "name", "" , "Default name")
+	configSetCmd.Flags().StringVar(&setName, "name", "", "Default name")
 
 	configProjectCmd.AddCommand(projectAddCmd)
 	configProjectCmd.AddCommand(projectRemoveCmd)
