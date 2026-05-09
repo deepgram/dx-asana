@@ -1,4 +1,4 @@
-.PHONY: help build run test lint fmt clean install deps release
+.PHONY: help build run test smoke lint fmt clean install deps release
 
 VERSION ?= $(shell git describe --tags --always --dirty)
 COMMIT := $(shell git rev-parse --short HEAD)
@@ -34,6 +34,9 @@ run:
 
 test:
 	go test -v ./...
+
+smoke: build
+	./scripts/smoke.sh ./asana-cli
 
 lint:
 	golangci-lint run ./...
