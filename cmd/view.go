@@ -31,12 +31,12 @@ var viewCmd = &cobra.Command{
 		} else {
 			fmt.Printf("📋 %s\n", task.Name)
 			fmt.Printf("   GID: %s\n", task.GID)
-			fmt.Printf("   Status: %v\n", task.Completed)
-			if task.DueDate != nil && !task.DueDate.IsZero() {
-				fmt.Printf("   Due: %s\n", task.DueDate.Format("2006-01-02"))
+			fmt.Printf("   Completed: %v\n", task.Completed)
+			if task.DueOn != nil && !task.DueOn.IsZero() {
+				fmt.Printf("   Due: %s\n", task.DueOn.Format("2006-01-02"))
 			}
-			if task.Description != "" {
-				fmt.Printf("   Description: %s\n", task.Description)
+			if task.Notes != "" {
+				fmt.Printf("   Notes: %s\n", task.Notes)
 			}
 			if task.Assignee != nil {
 				fmt.Printf("   Assigned to: %s\n", task.Assignee.Name)
@@ -50,6 +50,9 @@ var viewCmd = &cobra.Command{
 					fmt.Printf("%s", tag.Name)
 				}
 				fmt.Printf("\n")
+			}
+			if task.PermalinkURL != "" {
+				fmt.Printf("   Link: %s\n", task.PermalinkURL)
 			}
 		}
 

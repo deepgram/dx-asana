@@ -25,11 +25,14 @@ var updateCmd = &cobra.Command{
 		client := asana.NewClient(token)
 
 		req := &asana.TaskUpdateRequest{
-			Name:        updateName,
-			Description: updateDescription,
-			Assignee:    updateAssignee,
-			DueOn:       updateDueDate,
-			Priority:    updatePriority,
+			Name:     updateName,
+			Notes:    updateDescription,
+			Assignee: updateAssignee,
+			DueOn:    updateDueDate,
+		}
+
+		if updatePriority != "" && !jsonOutput {
+			fmt.Println("⚠ --priority is not yet supported (Asana priority is a custom_field; coming in a later release)")
 		}
 
 		task, err := client.UpdateTask(taskGID, req)
@@ -58,8 +61,8 @@ var updateCmd = &cobra.Command{
 
 func init() {
 	updateCmd.Flags().StringVar(&updateName, "name", "", "New task name")
-	updateCmd.Flags().StringVar(&updateDescription, "description", "", "New task description")
+	updateCmd.Flags().StringVar(&updateDescription, "description", "", "New task description (mapped to Asana 'notes')")
 	updateCmd.Flags().StringVar(&updateAssignee, "assignee", "", "New assignee user GID")
 	updateCmd.Flags().StringVar(&updateDueDate, "due", "", "New due date (YYYY-MM-DD)")
-	updateCmd.Flags().StringVar(&updatePriority, "priority", "", "New priority (1=high, 2=medium, 3=low)")
+	updateCmd.Flags().StringVar(&updatePriority, "priority", "", "New priority (not yet supported; see warning at runtime)")
 }

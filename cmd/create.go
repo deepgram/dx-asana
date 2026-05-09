@@ -36,16 +36,18 @@ var createCmd = &cobra.Command{
 		client := asana.NewClient(token)
 
 		req := &asana.TaskCreateRequest{
-			Name:        taskName,
-			Description: taskDescription,
-			Projects:    []string{projectGID},
-			Assignee:    taskAssignee,
-			DueOn:       taskDueDate,
-			Priority:    taskPriority,
+			Name:     taskName,
+			Notes:    taskDescription,
+			Projects: []string{projectGID},
+			Assignee: taskAssignee,
+			DueOn:    taskDueDate,
 		}
 
-		if taskSection != "" {
-			req.Section = taskSection
+		if taskPriority != "" && !jsonOutput {
+			fmt.Println("⚠ --priority is not yet supported (Asana priority is a custom_field; coming in a later release)")
+		}
+		if taskSection != "" && !jsonOutput {
+			fmt.Println("⚠ --section is not yet supported (requires POST /sections/{gid}/addTask; coming in a later release)")
 		}
 
 		task, err := client.CreateTask(req)
@@ -67,6 +69,9 @@ var createCmd = &cobra.Command{
 		} else {
 			fmt.Printf("✓ Task created: %s\n", task.Name)
 			fmt.Printf("  GID: %s\n", task.GID)
+			if task.PermalinkURL != "" {
+				fmt.Printf("  Link: %s\n", task.PermalinkURL)
+			}
 		}
 
 		return nil
@@ -75,10 +80,12 @@ var createCmd = &cobra.Command{
 
 func init() {
 	createCmd.Flags().StringVar(&taskName, "name", "", "Task name (required)")
-	createCmd.Flags().StringVar(&taskDescription, "description", "", "Task description")
+	createCmd.Flags().StringVar(&taskDescription, "description", "", "Task description (mapped to Asana 'notes')")
 	createCmd.Flags().StringVar(&taskAssignee, "assignee", "", "Assignee user GID")
 	createCmd.Flags().StringVar(&taskDueDate, "due", "", "Due date (YYYY-MM-DD)")
-	createCmd.Flags().StringVar(&taskPriority, "priority", "", "Priority (1=high, 2=medium, 3=low)")
+	createCmd.Flags().StringVar(&taskPriority, "priority", "", "Priority (not yet supported; see warning at runtime)")
 	createCmd.Flags().StringVar(&taskSection, "section", "", "Section GID")
-	if err := createCmd.MarkFlagRequired("name"); err != nil{log.Fatalf(err.Error())}
+	if err := createCmd.MarkFlagRequired("name"); err != nil {
+		log.Fatalf(err.Error())
+	}
 }

@@ -281,11 +281,10 @@ func (m Model) updateAddMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 		m.loading = true
 		req := &asana.TaskCreateRequest{
-			Name:        strings.TrimSpace(m.addFields[addFieldName]),
-			Description: strings.TrimSpace(m.addFields[addFieldDescription]),
-			Projects:    []string{m.projectGID},
-			DueOn:       strings.TrimSpace(m.addFields[addFieldDueDate]),
-			Priority:    strings.TrimSpace(m.addFields[addFieldPriority]),
+			Name:     strings.TrimSpace(m.addFields[addFieldName]),
+			Notes:    strings.TrimSpace(m.addFields[addFieldDescription]),
+			Projects: []string{m.projectGID},
+			DueOn:    strings.TrimSpace(m.addFields[addFieldDueDate]),
 		}
 
 		task, err := m.client.CreateTask(req)
@@ -485,20 +484,11 @@ func (m Model) viewTasks() string {
 			taskName = StyleSelected.Render(taskName)
 		}
 
-		// Priority indicator
 		priority := ""
-		if item.Task.Priority != "" {
-			if strings.Contains(strings.ToLower(item.Task.Priority), "high") {
-				priority = " " + StyleHighPriority.Render("!!!")
-			} else if strings.Contains(strings.ToLower(item.Task.Priority), "medium") {
-				priority = " " + StyleMediumPriority.Render("!!")
-			}
-		}
 
-		// Due date
 		dueDate := ""
-		if item.Task.DueDate != nil && !item.Task.DueDate.IsZero() {
-			daysUntil := int(time.Until(item.Task.DueDate.Time).Hours() / 24)
+		if item.Task.DueOn != nil && !item.Task.DueOn.IsZero() {
+			daysUntil := int(time.Until(item.Task.DueOn.Time).Hours() / 24)
 			if daysUntil < 0 {
 				dueDate = fmt.Sprintf(" %s", StyleError.Render(fmt.Sprintf("[%d days overdue]", -daysUntil)))
 			} else if daysUntil == 0 {

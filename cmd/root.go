@@ -1,39 +1,33 @@
 package cmd
 
 import (
-	// "fmt"
-	"os"
-
 	"github.com/TheCoolRobot/asana-cli/internal/config"
 	"github.com/spf13/cobra"
 )
 
 var (
-	jsonOutput  bool
-	token       string
-	workspace   string
-	project     string
+	jsonOutput bool
+	token      string
+	workspace  string
+	project    string
+)
+
+var (
+	Version = "dev"
+	Commit  = "unknown"
+	Date    = "unknown"
 )
 
 var rootCmd = &cobra.Command{
 	Use:     "asana-cli",
 	Short:   "Asana CLI - Beautiful task management",
 	Long:    "A feature-rich CLI for managing Asana tasks with TUI and sync daemon",
-	Version: getVersion(),
+	Version: Version,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		if token == "" {
 			token = config.GetAPIToken()
 		}
 	},
-}
-
-func getVersion() string {
-	// These are set at build time via -ldflags
-	// If not set, return "dev"
-	if version := os.Getenv("ASANA_CLI_VERSION"); version != "" {
-		return version
-	}
-	return "dev"
 }
 
 func init() {
@@ -56,5 +50,6 @@ func init() {
 }
 
 func Execute() error {
+	rootCmd.Version = Version
 	return rootCmd.Execute()
 }

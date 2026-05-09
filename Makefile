@@ -5,9 +5,9 @@ COMMIT := $(shell git rev-parse --short HEAD)
 BUILD_DATE := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 
 LDFLAGS := -ldflags "\
-	-X main.Version=$(VERSION) \
-	-X main.Commit=$(COMMIT) \
-	-X main.Date=$(BUILD_DATE)"
+	-X github.com/TheCoolRobot/asana-cli/cmd.Version=$(VERSION) \
+	-X github.com/TheCoolRobot/asana-cli/cmd.Commit=$(COMMIT) \
+	-X github.com/TheCoolRobot/asana-cli/cmd.Date=$(BUILD_DATE)"
 
 help:
 	@echo "asana-cli - Asana CLI with TUI and sync daemon"
