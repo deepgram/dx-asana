@@ -78,7 +78,7 @@ func (c *Client) do(method, endpoint string, body interface{}) ([]byte, error) {
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("API error (%d): %s", resp.StatusCode, string(respBody))
+		return nil, parseAPIError(resp.StatusCode, respBody)
 	}
 	return respBody, nil
 }
