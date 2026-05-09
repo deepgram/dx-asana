@@ -17,10 +17,59 @@ var (
 	setDesc      string
 )
 
+var (
+	clearAll       bool
+	clearToken     bool
+	clearWorkspace bool
+	clearCurrent   bool
+)
+
 var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Manage configuration",
 	Long:  "Get and set configuration values",
+}
+
+var configUnsetCmd = &cobra.Command{
+	Use:   "unset",
+	Short: "Clear stored configuration values",
+	Long:  "Clear stored config values. Use --all to wipe everything, or pick individual flags.",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if !clearAll && !clearToken && !clearWorkspace && !clearCurrent {
+			return fmt.Errorf("specify at least one of --all, --token, --workspace, --current-project")
+		}
+		cfg, _ := config.Load()
+		if clearAll {
+			cfg.APIToken = ""
+			cfg.DefaultWorkspace = ""
+			cfg.CurrentProject = ""
+			cfg.Projects = map[string]config.ProjectConfig{}
+		} else {
+			if clearToken {
+				cfg.APIToken = ""
+			}
+			if clearWorkspace {
+				cfg.DefaultWorkspace = ""
+			}
+			if clearCurrent {
+				cfg.CurrentProject = ""
+			}
+		}
+		if err := cfg.Save(); err != nil {
+			if jsonOutput {
+				ui.PrintJSON(nil, err)
+			} else {
+				fmt.Fprintln(os.Stderr, "Error:", err)
+			}
+			return err
+		}
+		if jsonOutput {
+			ui.PrintJSON(cfg, nil)
+		} else {
+			fmt.Println("✓ Configuration cleared")
+		}
+		return nil
+	},
 }
 
 var configGetCmd = &cobra.Command{
@@ -222,11 +271,17 @@ var projectSwitchCmd = &cobra.Command{
 func init() {
 	configCmd.AddCommand(configGetCmd)
 	configCmd.AddCommand(configSetCmd)
+	configCmd.AddCommand(configUnsetCmd)
 	configCmd.AddCommand(configProjectCmd)
 
 	configSetCmd.Flags().StringVar(&setToken, "token", "", "API token")
 	configSetCmd.Flags().StringVar(&setWorkspace, "workspace", "", "Default workspace ID")
 	configSetCmd.Flags().StringVar(&setName, "name", "", "Default name")
+
+	configUnsetCmd.Flags().BoolVar(&clearAll, "all", false, "Wipe the entire config (token, workspace, projects)")
+	configUnsetCmd.Flags().BoolVar(&clearToken, "token", false, "Clear stored API token")
+	configUnsetCmd.Flags().BoolVar(&clearWorkspace, "workspace", false, "Clear default workspace")
+	configUnsetCmd.Flags().BoolVar(&clearCurrent, "current-project", false, "Clear current project selection (does not delete saved projects)")
 
 	configProjectCmd.AddCommand(projectAddCmd)
 	configProjectCmd.AddCommand(projectRemoveCmd)
@@ -238,8 +293,11 @@ func init() {
 }
 
 func maskToken(token string) string {
-	if len(token) < 8 {
-		return "***"
+	if token == "" {
+		return "(not set)"
 	}
-	return token[:4] + "****" + token[len(token)-4:]
+	if len(token) < 8 {
+		return "***" + token[len(token)-1:]
+	}
+	return token[:4] + "..." + token[len(token)-4:]
 }

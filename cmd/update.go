@@ -23,6 +23,14 @@ var updateCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		taskGID := args[0]
+		if err := validateDueDate(updateDueDate); err != nil {
+			if jsonOutput {
+				ui.PrintJSON(nil, err)
+			} else {
+				fmt.Fprintln(os.Stderr, "Error:", err)
+			}
+			return err
+		}
 		client := asana.NewClient(token)
 
 		req := &asana.TaskUpdateRequest{

@@ -25,12 +25,21 @@ var createCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if taskName == "" {
+			err := fmt.Errorf("task name is required")
 			if jsonOutput {
-				ui.PrintJSON(nil, fmt.Errorf("task name is required"))
+				ui.PrintJSON(nil, err)
 			} else {
-				fmt.Println("Error: task name is required")
+				fmt.Fprintln(os.Stderr, "Error: task name is required")
 			}
-			return fmt.Errorf("task name required")
+			return err
+		}
+		if err := validateDueDate(taskDueDate); err != nil {
+			if jsonOutput {
+				ui.PrintJSON(nil, err)
+			} else {
+				fmt.Fprintln(os.Stderr, "Error:", err)
+			}
+			return err
 		}
 
 		projectGID := args[0]
