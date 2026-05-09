@@ -285,6 +285,61 @@ func (c *Client) UpdateWorkspace(workspaceGID string, req *WorkspaceUpdateReques
 	return envelope.Data, nil
 }
 
+// GetStories lists stories (comments and system events) on a task.
+func (c *Client) GetStories(taskGID string, opts ...Option) ([]Story, error) {
+	body, err := c.do("GET", fmt.Sprintf("/tasks/%s/stories", taskGID)+applyOptions(opts), nil)
+	if err != nil {
+		return nil, err
+	}
+	var envelope struct {
+		Data []Story `json:"data"`
+	}
+	if err := json.Unmarshal(body, &envelope); err != nil {
+		return nil, err
+	}
+	return envelope.Data, nil
+}
+
+// CreateStory adds a comment (or system event) to a task.
+func (c *Client) CreateStory(taskGID string, req *StoryCreateRequest, opts ...Option) (*Story, error) {
+	body, err := c.do("POST", fmt.Sprintf("/tasks/%s/stories", taskGID)+applyOptions(opts),
+		map[string]interface{}{"data": req})
+	if err != nil {
+		return nil, err
+	}
+	var envelope struct {
+		Data *Story `json:"data"`
+	}
+	if err := json.Unmarshal(body, &envelope); err != nil {
+		return nil, err
+	}
+	return envelope.Data, nil
+}
+
+// GetSubtasks lists subtasks for a parent task.
+func (c *Client) GetSubtasks(parentGID string, opts ...Option) ([]Task, error) {
+	body, err := c.do("GET", fmt.Sprintf("/tasks/%s/subtasks", parentGID)+applyOptions(opts), nil)
+	if err != nil {
+		return nil, err
+	}
+	var envelope struct {
+		Data []Task `json:"data"`
+	}
+	if err := json.Unmarshal(body, &envelope); err != nil {
+		return nil, err
+	}
+	return envelope.Data, nil
+}
+
+// AddTaskToSection moves an existing task into a specific section. The Asana
+// API requires this as a separate POST after the task has been created, since
+// providing "section" in the create body is silently ignored.
+func (c *Client) AddTaskToSection(sectionGID, taskGID string) error {
+	_, err := c.do("POST", fmt.Sprintf("/sections/%s/addTask", sectionGID),
+		map[string]interface{}{"data": SectionAddTaskRequest{Task: taskGID}})
+	return err
+}
+
 // GetTasksByWorkspace lists tasks across a workspace, accepting filters via
 // options (assignee, project, completed_since, etc.).
 func (c *Client) GetTasksByWorkspace(workspaceGID string, opts ...Option) ([]Task, error) {

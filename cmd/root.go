@@ -38,7 +38,6 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&workspace, "workspace", "", "Default workspace ID")
 	rootCmd.PersistentFlags().StringVar(&project, "project", "", "Default project ID")
 
-	// Add all commands
 	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(createCmd)
 	rootCmd.AddCommand(updateCmd)
@@ -49,6 +48,12 @@ func init() {
 	rootCmd.AddCommand(configCmd)
 	rootCmd.AddCommand(syncCmd)
 	rootCmd.AddCommand(meCmd)
+	rootCmd.AddCommand(myTasksCmd)
+	rootCmd.AddCommand(commentCmd)
+	rootCmd.AddCommand(workspacesCmd)
+	rootCmd.AddCommand(projectsCmd)
+	rootCmd.AddCommand(sectionsCmd)
+	rootCmd.AddCommand(subtasksCmd)
 }
 
 func Execute() error {

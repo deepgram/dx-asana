@@ -17,12 +17,17 @@ var (
 	taskDueDate     string
 	taskPriority    string
 	taskSection     string
+	taskParent      string
 )
 
 var createCmd = &cobra.Command{
 	Use:   "create [project-id]",
 	Short: "Create a new task",
-	Args:  cobra.MinimumNArgs(1),
+	Long: `Create a new task in a project, or as a subtask of an existing task.
+
+  asana-cli create <project-gid> --name "..."
+  asana-cli create --parent <task-gid> --name "Subtask"   # project-id not required`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if taskName == "" {
 			err := fmt.Errorf("task name is required")
@@ -42,15 +47,30 @@ var createCmd = &cobra.Command{
 			return err
 		}
 
-		projectGID := args[0]
+		projectGID := ""
+		if len(args) > 0 {
+			projectGID = args[0]
+		}
+		if projectGID == "" && taskParent == "" {
+			err := fmt.Errorf("either a project GID positional or --parent <task-gid> is required")
+			if jsonOutput {
+				ui.PrintJSON(nil, err)
+			} else {
+				fmt.Fprintln(os.Stderr, "Error:", err)
+			}
+			return err
+		}
 		client := asana.NewClient(token)
 
 		req := &asana.TaskCreateRequest{
 			Name:     taskName,
 			Notes:    taskDescription,
-			Projects: []string{projectGID},
 			Assignee: taskAssignee,
 			DueOn:    taskDueDate,
+			Parent:   taskParent,
+		}
+		if taskParent == "" {
+			req.Projects = []string{projectGID}
 		}
 
 		if taskPriority != "" && !jsonOutput {
@@ -95,6 +115,7 @@ func init() {
 	createCmd.Flags().StringVar(&taskDueDate, "due", "", "Due date (YYYY-MM-DD)")
 	createCmd.Flags().StringVar(&taskPriority, "priority", "", "Priority (not yet supported; see warning at runtime)")
 	createCmd.Flags().StringVar(&taskSection, "section", "", "Section GID")
+	createCmd.Flags().StringVar(&taskParent, "parent", "", "Parent task GID (creates a subtask; project arg is ignored when set)")
 	if err := createCmd.MarkFlagRequired("name"); err != nil {
 		log.Fatalf(err.Error())
 	}
