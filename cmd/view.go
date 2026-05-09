@@ -8,6 +8,8 @@ import (
 	"github.com/TheCoolRobot/asana-cli/internal/ui"
 )
 
+var viewFields string
+
 var viewCmd = &cobra.Command{
 	Use:   "view [task-id]",
 	Short: "View task details",
@@ -16,7 +18,14 @@ var viewCmd = &cobra.Command{
 		taskGID := args[0]
 		client := asana.NewClient(token)
 
-		task, err := client.GetTask(taskGID)
+		opts := []asana.Option{}
+		if viewFields != "" {
+			opts = append(opts, asana.WithOptFields(splitFields(viewFields)...))
+		} else {
+			opts = append(opts, asana.WithOptFields(asana.DefaultTaskFields...))
+		}
+
+		task, err := client.GetTask(taskGID, opts...)
 		if err != nil {
 			if jsonOutput {
 				ui.PrintJSON(nil, err)
@@ -58,4 +67,8 @@ var viewCmd = &cobra.Command{
 
 		return nil
 	},
+}
+
+func init() {
+	viewCmd.Flags().StringVar(&viewFields, "fields", "", "Comma-separated opt_fields (overrides default)")
 }

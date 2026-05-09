@@ -63,7 +63,7 @@ func (d *Daemon) syncAll() {
 }
 
 func (d *Daemon) syncProject(projectID string) error {
-	tasks, err := d.client.GetTasks(projectID, nil)
+	tasks, err := d.client.GetTasks(projectID, asana.WithOptFields(asana.DefaultTaskFields...))
 	if err != nil {
 		return err
 	}

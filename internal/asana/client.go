@@ -6,28 +6,42 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
-	
 )
-// "strings"
+
+const defaultBaseURL = "https://app.asana.com/api/1.0"
+
+// Client is a thin wrapper around Asana's REST API. Construct via NewClient.
+// Methods on Client follow Asana's resource model (User, Task, Project,
+// Workspace, Section, Story, Attachment, Tag) and accept variadic Option
+// values for query parameters such as opt_fields, limit, and offset.
 type Client struct {
-	apiToken string
-	baseURL  string
-	http     *http.Client
+	apiToken  string
+	baseURL   string
+	userAgent string
+	http      *http.Client
 }
 
+// NewClient builds a Client. If apiToken is empty, ASANA_TOKEN is read from
+// the environment as a fallback.
 func NewClient(apiToken string) *Client {
 	if apiToken == "" {
 		apiToken = os.Getenv("ASANA_TOKEN")
 	}
-
 	return &Client{
-		apiToken: apiToken,
-		baseURL:  "https://app.asana.com/api/1.0",
-		http:     &http.Client{},
+		apiToken:  apiToken,
+		baseURL:   defaultBaseURL,
+		userAgent: "asana-cli/dev (+https://github.com/TheCoolRobot/asana-cli)",
+		http:      &http.Client{},
 	}
 }
+
+// SetBaseURL overrides the API base URL. Useful for testing against a fake
+// server or a non-default Asana deployment.
+func (c *Client) SetBaseURL(u string) { c.baseURL = u }
+
+// SetUserAgent overrides the User-Agent header sent with each request.
+func (c *Client) SetUserAgent(ua string) { c.userAgent = ua }
 
 func (c *Client) do(method, endpoint string, body interface{}) ([]byte, error) {
 	if c.apiToken == "" {
@@ -43,14 +57,14 @@ func (c *Client) do(method, endpoint string, body interface{}) ([]byte, error) {
 		reqBody = bytes.NewBuffer(jsonBody)
 	}
 
-	url := c.baseURL + endpoint
-	req, err := http.NewRequest(method, url, reqBody)
+	req, err := http.NewRequest(method, c.baseURL+endpoint, reqBody)
 	if err != nil {
 		return nil, err
 	}
-
-	req.Header.Add("Authorization", "Bearer "+c.apiToken)
-	req.Header.Add("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("Accept", "application/json")
 
 	resp, err := c.http.Do(req)
 	if err != nil {
@@ -66,305 +80,223 @@ func (c *Client) do(method, endpoint string, body interface{}) ([]byte, error) {
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("API error (%d): %s", resp.StatusCode, string(respBody))
 	}
-
 	return respBody, nil
 }
 
-// GetMe retrieves current user info
-func (c *Client) GetMe() (*User, error) {
-	body, err := c.do("GET", "/users/me", nil)
+// GetMe retrieves the authenticated user.
+func (c *Client) GetMe(opts ...Option) (*User, error) {
+	body, err := c.do("GET", "/users/me"+applyOptions(opts), nil)
 	if err != nil {
 		return nil, err
 	}
-
-	var response struct {
+	var envelope struct {
 		Data *User `json:"data"`
 	}
-
-	if err := json.Unmarshal(body, &response); err != nil {
+	if err := json.Unmarshal(body, &envelope); err != nil {
 		return nil, err
 	}
-
-	return response.Data, nil
+	return envelope.Data, nil
 }
 
-// GetWorkspaces retrieves all workspaces
-func (c *Client) GetWorkspaces() ([]Workspace, error) {
-	body, err := c.do("GET", "/workspaces", nil)
+// GetWorkspaces retrieves all workspaces the user has access to.
+func (c *Client) GetWorkspaces(opts ...Option) ([]Workspace, error) {
+	body, err := c.do("GET", "/workspaces"+applyOptions(opts), nil)
 	if err != nil {
 		return nil, err
 	}
-
-	var response struct {
+	var envelope struct {
 		Data []Workspace `json:"data"`
 	}
-
-	if err := json.Unmarshal(body, &response); err != nil {
+	if err := json.Unmarshal(body, &envelope); err != nil {
 		return nil, err
 	}
-
-	return response.Data, nil
+	return envelope.Data, nil
 }
 
-// GetProjects retrieves projects in a workspace
-func (c *Client) GetProjects(workspaceGID string) ([]Project, error) {
-	endpoint := fmt.Sprintf("/projects?workspace=%s", workspaceGID)
-	body, err := c.do("GET", endpoint, nil)
+// GetProjects lists projects in a workspace.
+func (c *Client) GetProjects(workspaceGID string, opts ...Option) ([]Project, error) {
+	opts = append([]Option{WithWorkspace(workspaceGID)}, opts...)
+	body, err := c.do("GET", "/projects"+applyOptions(opts), nil)
 	if err != nil {
 		return nil, err
 	}
-
-	var response struct {
+	var envelope struct {
 		Data []Project `json:"data"`
 	}
-
-	if err := json.Unmarshal(body, &response); err != nil {
+	if err := json.Unmarshal(body, &envelope); err != nil {
 		return nil, err
 	}
-
-	return response.Data, nil
+	return envelope.Data, nil
 }
 
-// GetTasks retrieves tasks from a project with optional filters
-// Supports filters: completed_since, assignee, modified_since, etc.
-func (c *Client) GetTasks(projectGID string, filters map[string]string) ([]Task, error) {
-	endpoint := fmt.Sprintf("/projects/%s/tasks", projectGID)
-	
-	if len(filters) > 0 {
-		q := url.Values{}
-		for k, v := range filters {
-			q.Add(k, v)
-		}
-		endpoint += "?" + q.Encode()
-	}
-
-	body, err := c.do("GET", endpoint, nil)
+// GetTasks lists tasks in a project. By default, only the compact
+// representation is returned; pass WithOptFields(...) to widen the response.
+func (c *Client) GetTasks(projectGID string, opts ...Option) ([]Task, error) {
+	body, err := c.do("GET", fmt.Sprintf("/projects/%s/tasks", projectGID)+applyOptions(opts), nil)
 	if err != nil {
 		return nil, err
 	}
-
-	var response struct {
+	var envelope struct {
 		Data []Task `json:"data"`
 	}
-
-	if err := json.Unmarshal(body, &response); err != nil {
+	if err := json.Unmarshal(body, &envelope); err != nil {
 		return nil, err
 	}
-
-	return response.Data, nil
+	return envelope.Data, nil
 }
 
-// GetTask retrieves a specific task using task GID
-// GET /tasks/{task_gid}
-func (c *Client) GetTask(taskGID string) (*Task, error) {
-	endpoint := fmt.Sprintf("/tasks/%s", taskGID)
-	body, err := c.do("GET", endpoint, nil)
+// GetTask retrieves a single task by GID.
+func (c *Client) GetTask(taskGID string, opts ...Option) (*Task, error) {
+	body, err := c.do("GET", fmt.Sprintf("/tasks/%s", taskGID)+applyOptions(opts), nil)
 	if err != nil {
 		return nil, err
 	}
-
-	var response struct {
+	var envelope struct {
 		Data *Task `json:"data"`
 	}
-
-	if err := json.Unmarshal(body, &response); err != nil {
+	if err := json.Unmarshal(body, &envelope); err != nil {
 		return nil, err
 	}
-
-	return response.Data, nil
+	return envelope.Data, nil
 }
 
-// CreateTask creates a new task
-// POST /tasks
-func (c *Client) CreateTask(req *TaskCreateRequest) (*Task, error) {
-	payload := map[string]interface{}{
-		"data": req,
-	}
-
-	body, err := c.do("POST", "/tasks", payload)
+// CreateTask creates a new task. POST /tasks.
+func (c *Client) CreateTask(req *TaskCreateRequest, opts ...Option) (*Task, error) {
+	body, err := c.do("POST", "/tasks"+applyOptions(opts), map[string]interface{}{"data": req})
 	if err != nil {
 		return nil, err
 	}
-
-	var response struct {
+	var envelope struct {
 		Data *Task `json:"data"`
 	}
-
-	if err := json.Unmarshal(body, &response); err != nil {
+	if err := json.Unmarshal(body, &envelope); err != nil {
 		return nil, err
 	}
-
-	return response.Data, nil
+	return envelope.Data, nil
 }
 
-// UpdateTask updates a task using task GID
-// PUT /tasks/{task_gid}
-func (c *Client) UpdateTask(taskGID string, req *TaskUpdateRequest) (*Task, error) {
-	endpoint := fmt.Sprintf("/tasks/%s", taskGID)
-	payload := map[string]interface{}{
-		"data": req,
-	}
-
-	body, err := c.do("PUT", endpoint, payload)
+// UpdateTask edits an existing task. PUT /tasks/{task_gid}.
+func (c *Client) UpdateTask(taskGID string, req *TaskUpdateRequest, opts ...Option) (*Task, error) {
+	body, err := c.do("PUT", fmt.Sprintf("/tasks/%s", taskGID)+applyOptions(opts), map[string]interface{}{"data": req})
 	if err != nil {
 		return nil, err
 	}
-
-	var response struct {
+	var envelope struct {
 		Data *Task `json:"data"`
 	}
-
-	if err := json.Unmarshal(body, &response); err != nil {
+	if err := json.Unmarshal(body, &envelope); err != nil {
 		return nil, err
 	}
-
-	return response.Data, nil
+	return envelope.Data, nil
 }
 
-// CompleteTask marks a task as complete
-// Calls UpdateTask with completed: true
+// CompleteTask marks a task as completed.
 func (c *Client) CompleteTask(taskGID string) (*Task, error) {
 	completed := true
-	return c.UpdateTask(taskGID, &TaskUpdateRequest{
-		Completed: &completed,
-	})
+	return c.UpdateTask(taskGID, &TaskUpdateRequest{Completed: &completed})
 }
 
-// DeleteTask deletes a task
-// DELETE /tasks/{task_gid}
+// DeleteTask removes a task. DELETE /tasks/{task_gid}.
 func (c *Client) DeleteTask(taskGID string) error {
-	endpoint := fmt.Sprintf("/tasks/%s", taskGID)
-	_, err := c.do("DELETE", endpoint, nil)
+	_, err := c.do("DELETE", fmt.Sprintf("/tasks/%s", taskGID), nil)
 	return err
 }
 
-// GetSections retrieves sections in a project
-func (c *Client) GetSections(projectGID string) ([]Section, error) {
-	endpoint := fmt.Sprintf("/projects/%s/sections", projectGID)
-	body, err := c.do("GET", endpoint, nil)
+// GetSections lists sections in a project.
+func (c *Client) GetSections(projectGID string, opts ...Option) ([]Section, error) {
+	body, err := c.do("GET", fmt.Sprintf("/projects/%s/sections", projectGID)+applyOptions(opts), nil)
 	if err != nil {
 		return nil, err
 	}
-
-	var response struct {
+	var envelope struct {
 		Data []Section `json:"data"`
 	}
-
-	if err := json.Unmarshal(body, &response); err != nil {
+	if err := json.Unmarshal(body, &envelope); err != nil {
 		return nil, err
 	}
-
-	return response.Data, nil
+	return envelope.Data, nil
 }
 
-// Search searches for tasks by text query
-// GET /workspaces/{workspace_gid}/tasks/search
+// SearchTasks runs a typeahead text search across a workspace's tasks.
+// Caller must pass WithText("...") for a useful query.
+func (c *Client) SearchTasks(workspaceGID string, opts ...Option) ([]Task, error) {
+	body, err := c.do("GET", fmt.Sprintf("/workspaces/%s/tasks/search", workspaceGID)+applyOptions(opts), nil)
+	if err != nil {
+		return nil, err
+	}
+	var envelope struct {
+		Data []Task `json:"data"`
+	}
+	if err := json.Unmarshal(body, &envelope); err != nil {
+		return nil, err
+	}
+	return envelope.Data, nil
+}
+
+// Search is a backward-compatible wrapper around SearchTasks for the simple
+// "workspace + text query" case used by older callers.
 func (c *Client) Search(workspaceGID, query string) ([]Task, error) {
-	endpoint := fmt.Sprintf("/workspaces/%s/tasks/search?text=%s", workspaceGID, url.QueryEscape(query))
-	body, err := c.do("GET", endpoint, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var response struct {
-		Data []Task `json:"data"`
-	}
-
-	if err := json.Unmarshal(body, &response); err != nil {
-		return nil, err
-	}
-
-	return response.Data, nil
+	return c.SearchTasks(workspaceGID, WithText(query))
 }
 
-// GetUserTaskList retrieves a user's "My Tasks" list
-// GET /users/{user_gid}/user_task_list
-func (c *Client) GetUserTaskList(userGID string) ([]Task, error) {
-	endpoint := fmt.Sprintf("/users/%s/user_task_list", userGID)
-	body, err := c.do("GET", endpoint, nil)
+// GetUserTaskList retrieves a user's "My Tasks" list as tasks.
+func (c *Client) GetUserTaskList(userGID string, opts ...Option) ([]Task, error) {
+	body, err := c.do("GET", fmt.Sprintf("/users/%s/user_task_list", userGID)+applyOptions(opts), nil)
 	if err != nil {
 		return nil, err
 	}
-
-	var response struct {
+	var envelope struct {
 		Data []Task `json:"data"`
 	}
-
-	if err := json.Unmarshal(body, &response); err != nil {
+	if err := json.Unmarshal(body, &envelope); err != nil {
 		return nil, err
 	}
-
-	return response.Data, nil
+	return envelope.Data, nil
 }
 
-// GetUserTeams retrieves teams a specific user belongs to
-// GET /users/{user_gid}/teams
-func (c *Client) GetUserTeams(userGID string) ([]Team, error) {
-	endpoint := fmt.Sprintf("/users/%s/teams", userGID)
-	body, err := c.do("GET", endpoint, nil)
+// GetUserTeams retrieves teams a user belongs to.
+func (c *Client) GetUserTeams(userGID string, opts ...Option) ([]Team, error) {
+	body, err := c.do("GET", fmt.Sprintf("/users/%s/teams", userGID)+applyOptions(opts), nil)
 	if err != nil {
 		return nil, err
 	}
-
-	var response struct {
+	var envelope struct {
 		Data []Team `json:"data"`
 	}
-
-	if err := json.Unmarshal(body, &response); err != nil {
+	if err := json.Unmarshal(body, &envelope); err != nil {
 		return nil, err
 	}
-
-	return response.Data, nil
+	return envelope.Data, nil
 }
 
-// UpdateWorkspace updates a workspace
-// PUT /workspaces/{workspace_gid}
-func (c *Client) UpdateWorkspace(workspaceGID string, req *WorkspaceUpdateRequest) (*Workspace, error) {
-	endpoint := fmt.Sprintf("/workspaces/%s", workspaceGID)
-	payload := map[string]interface{}{
-		"data": req,
-	}
-
-	body, err := c.do("PUT", endpoint, payload)
+// UpdateWorkspace renames or otherwise updates a workspace.
+func (c *Client) UpdateWorkspace(workspaceGID string, req *WorkspaceUpdateRequest, opts ...Option) (*Workspace, error) {
+	body, err := c.do("PUT", fmt.Sprintf("/workspaces/%s", workspaceGID)+applyOptions(opts),
+		map[string]interface{}{"data": req})
 	if err != nil {
 		return nil, err
 	}
-
-	var response struct {
+	var envelope struct {
 		Data *Workspace `json:"data"`
 	}
-
-	if err := json.Unmarshal(body, &response); err != nil {
+	if err := json.Unmarshal(body, &envelope); err != nil {
 		return nil, err
 	}
-
-	return response.Data, nil
+	return envelope.Data, nil
 }
 
-// GetTasksByWorkspace retrieves tasks from a workspace with optional filters
-func (c *Client) GetTasksByWorkspace(workspaceGID string, filters map[string]string) ([]Task, error) {
-	endpoint := fmt.Sprintf("/workspaces/%s/tasks", workspaceGID)
-	
-	if len(filters) > 0 {
-		q := url.Values{}
-		for k, v := range filters {
-			q.Add(k, v)
-		}
-		endpoint += "?" + q.Encode()
-	}
-
-	body, err := c.do("GET", endpoint, nil)
+// GetTasksByWorkspace lists tasks across a workspace, accepting filters via
+// options (assignee, project, completed_since, etc.).
+func (c *Client) GetTasksByWorkspace(workspaceGID string, opts ...Option) ([]Task, error) {
+	body, err := c.do("GET", fmt.Sprintf("/workspaces/%s/tasks", workspaceGID)+applyOptions(opts), nil)
 	if err != nil {
 		return nil, err
 	}
-
-	var response struct {
+	var envelope struct {
 		Data []Task `json:"data"`
 	}
-
-	if err := json.Unmarshal(body, &response); err != nil {
+	if err := json.Unmarshal(body, &envelope); err != nil {
 		return nil, err
 	}
-
-	return response.Data, nil
+	return envelope.Data, nil
 }
