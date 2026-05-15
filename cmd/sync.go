@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"strings"
 
-	"github.com/TheCoolRobot/asana-cli/internal/syncdaemon"
+	"github.com/deepgram/dx-asana/internal/syncdaemon"
 	"github.com/spf13/cobra"
 )
 
@@ -46,5 +46,7 @@ var syncCmd = &cobra.Command{
 
 func init() {
 	syncCmd.Flags().StringVar(&projects, "projects", "", "Comma-separated list of project IDs to sync (required)")
-	if err := syncCmd.MarkFlagRequired("projects"); err != nil{log.Fatalf(err.Error())}
+	if err := syncCmd.MarkFlagRequired("projects"); err != nil {
+		log.Fatal(err)
+	}
 }

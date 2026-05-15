@@ -11,18 +11,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.22'
-      
+
       - name: Download dependencies
         run: go mod download
-      
+
       - name: Run tests
         run: go test -v -race -coverprofile=coverage.out ./...
-      
+
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:
@@ -32,12 +32,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.22'
-      
+
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v4
         with:
@@ -48,17 +48,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.22'
-      
+
       - name: Build
-        run: go build -v -o asana-cli main.go
-      
+        run: go build -v -o dx-asana main.go
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: asana-cli
-          path: asana-cli
+          name: dx-asana
+          path: dx-asana

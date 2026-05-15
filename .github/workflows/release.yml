@@ -12,158 +12,46 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      
+      - uses: actions/checkout@v4
+
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.22'
-      
+
       - name: Build binaries
         run: make release
-      
+
       - name: Verify binaries exist
         run: |
           echo "=== Built binaries ==="
           ls -lh dist/
           echo ""
           echo "=== Verifying binaries are executable ==="
-          file dist/asana-cli-*
-      
+          file dist/dx-asana-*
+
       - name: Calculate checksums
-        id: checksums
         run: |
           cd dist
-          
-          echo "=== Calculating checksums ==="
-          
-          MACOS_INTEL_SHA=$(sha256sum asana-cli-darwin-amd64 | awk '{print $1}')
-          MACOS_ARM_SHA=$(sha256sum asana-cli-darwin-arm64 | awk '{print $1}')
-          LINUX_SHA=$(sha256sum asana-cli-linux-amd64 | awk '{print $1}')
-          
-          echo "macOS Intel SHA: $MACOS_INTEL_SHA"
-          echo "macOS ARM SHA: $MACOS_ARM_SHA"
-          echo "Linux SHA: $LINUX_SHA"
-          
-          # Save as environment variables for next step
-          echo "MACOS_INTEL_SHA=$MACOS_INTEL_SHA" >> $GITHUB_ENV
-          echo "MACOS_ARM_SHA=$MACOS_ARM_SHA" >> $GITHUB_ENV
-          echo "LINUX_SHA=$LINUX_SHA" >> $GITHUB_ENV
-          
-          # Also save checksums file
-          sha256sum asana-cli-darwin-amd64 > checksums.txt
-          sha256sum asana-cli-darwin-arm64 >> checksums.txt
-          sha256sum asana-cli-linux-amd64 >> checksums.txt
-          sha256sum asana-cli-linux-arm64 >> checksums.txt
-          sha256sum asana-cli-windows-amd64.exe >> checksums.txt
-          
+          sha256sum dx-asana-darwin-amd64    > checksums.txt
+          sha256sum dx-asana-darwin-arm64   >> checksums.txt
+          sha256sum dx-asana-linux-amd64    >> checksums.txt
+          sha256sum dx-asana-linux-arm64    >> checksums.txt
+          sha256sum dx-asana-windows-amd64.exe >> checksums.txt
           echo ""
           echo "=== All checksums ==="
           cat checksums.txt
-      
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            dist/asana-cli-darwin-amd64
-            dist/asana-cli-darwin-arm64
-            dist/asana-cli-linux-amd64
-            dist/asana-cli-linux-arm64
-            dist/asana-cli-windows-amd64.exe
+            dist/dx-asana-darwin-amd64
+            dist/dx-asana-darwin-arm64
+            dist/dx-asana-linux-amd64
+            dist/dx-asana-linux-arm64
+            dist/dx-asana-windows-amd64.exe
             dist/checksums.txt
           body: "Release ${{ github.ref_name }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Checkout Homebrew tap repo
-        uses: actions/checkout@v3
-        with:
-          repository: TheCoolRobot/homebrew-asana-cli
-          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-          path: homebrew-tap
-      
-      - name: Generate Homebrew formula
-        run: |
-          set -e
-          
-          TAG=${{ github.ref_name }}
-          echo "Generating Homebrew formula for tag: $TAG"
-          echo "Using checksums:"
-          echo "  macOS Intel: $MACOS_INTEL_SHA"
-          echo "  macOS ARM: $MACOS_ARM_SHA"
-          echo "  Linux: $LINUX_SHA"
-          
-          # Create formula file
-          mkdir -p homebrew-tap/Formula
-          
-          cat > homebrew-tap/Formula/asana-cli.rb << FORMULA
-          class AsanaCli < Formula
-            desc "Beautiful Asana CLI with TUI and sync daemon"
-            homepage "https://github.com/TheCoolRobot/asana-cli"
-            license "MIT"
-            version "$TAG"
-            
-            on_macos do
-              on_intel do
-                url "https://github.com/TheCoolRobot/asana-cli/releases/download/$TAG/asana-cli-darwin-amd64"
-                sha256 "$MACOS_INTEL_SHA"
-              end
-              on_arm do
-                url "https://github.com/TheCoolRobot/asana-cli/releases/download/$TAG/asana-cli-darwin-arm64"
-                sha256 "$MACOS_ARM_SHA"
-              end
-            end
-            
-            on_linux do
-              url "https://github.com/TheCoolRobot/asana-cli/releases/download/$TAG/asana-cli-linux-amd64"
-              sha256 "$LINUX_SHA"
-            end
-            
-            def install
-              if OS.mac?
-                if Hardware::CPU.intel?
-                  bin.install "asana-cli-darwin-amd64" => "asana-cli"
-                elsif Hardware::CPU.arm?
-                  bin.install "asana-cli-darwin-arm64" => "asana-cli"
-                end
-              elsif OS.linux?
-                bin.install "asana-cli-linux-amd64" => "asana-cli"
-              end
-            end
-            
-            def post_install
-              puts "✓ Asana CLI installed successfully!"
-              puts "Get started: asana-cli config set --token YOUR_TOKEN"
-            end
-            
-            test do
-              system "#{bin}/asana-cli", "--version"
-            end
-          end
-          FORMULA
-          
-          echo "=== Generated Formula ==="
-          cat homebrew-tap/Formula/asana-cli.rb
-      
-      - name: Commit and push to Homebrew tap
-        working-directory: homebrew-tap
-        run: |
-          set -e
-          
-          echo "Configuring git..."
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-          
-          echo "Adding formula..."
-          git add Formula/asana-cli.rb
-          
-          echo "Checking git status..."
-          git status
-          
-          echo "Committing changes..."
-          git commit -m "Update asana-cli to ${{ github.ref_name }}" || echo "No changes to commit"
-          
-          echo "Pushing to tap repository..."
-          git push origin main
-          
-          echo "✓ Successfully updated Homebrew tap"

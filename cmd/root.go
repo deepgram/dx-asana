@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/TheCoolRobot/asana-cli/internal/config"
+	"github.com/deepgram/dx-asana/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -19,8 +19,8 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:           "asana-cli",
-	Short:         "Asana CLI - Beautiful task management",
+	Use:           "dx-asana",
+	Short:         "dx-asana - Deepgram DX Asana CLI",
 	Long:          "A feature-rich CLI for managing Asana tasks with TUI and sync daemon",
 	Version:       Version,
 	SilenceUsage:  true,

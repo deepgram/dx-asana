@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/TheCoolRobot/asana-cli/internal/config"
-	"github.com/TheCoolRobot/asana-cli/internal/ui"
+	"github.com/deepgram/dx-asana/internal/config"
+	"github.com/deepgram/dx-asana/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -13,7 +13,6 @@ var (
 	setToken     string
 	setWorkspace string
 	setName      string
-	setProjectID string
 	setDesc      string
 )
 
@@ -217,7 +216,7 @@ var projectListCmd = &cobra.Command{
 			ui.PrintJSONWithMeta(projects, meta, nil)
 		} else {
 			if len(projects) == 0 {
-				fmt.Println("No projects configured. Add one with: asana-cli config project add <name> <project-id>")
+				fmt.Println("No projects configured. Add one with: dx-asana config project add <name> <project-id>")
 				return nil
 			}
 

@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/TheCoolRobot/asana-cli/cmd"
+	"github.com/deepgram/dx-asana/cmd"
 )
 
 func main() {

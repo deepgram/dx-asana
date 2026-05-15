@@ -1,4 +1,4 @@
-module github.com/TheCoolRobot/asana-cli
+module github.com/deepgram/dx-asana
 
 go 1.22
 

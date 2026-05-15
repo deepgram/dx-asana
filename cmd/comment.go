@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/TheCoolRobot/asana-cli/internal/asana"
-	"github.com/TheCoolRobot/asana-cli/internal/ui"
+	"github.com/deepgram/dx-asana/internal/asana"
+	"github.com/deepgram/dx-asana/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -22,10 +22,10 @@ var commentCmd = &cobra.Command{
 	Long: `Add a comment to a task or list its existing comments.
 
 Examples:
-  asana-cli comment <task-gid> --text "Status update: blocked on review"
-  asana-cli comment <task-gid> --list           # show all comments
-  asana-cli comment <task-gid> --html-text "<body><b>Bold</b> note</body>"
-  asana-cli comment <task-gid> --text "..." --pin`,
+  dx-asana comment <task-gid> --text "Status update: blocked on review"
+  dx-asana comment <task-gid> --list           # show all comments
+  dx-asana comment <task-gid> --html-text "<body><b>Bold</b> note</body>"
+  dx-asana comment <task-gid> --text "..." --pin`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		taskGID := args[0]

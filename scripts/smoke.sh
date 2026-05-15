@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Read-only end-to-end smoke check for asana-cli. Does not mutate any Asana
+# Read-only end-to-end smoke check for dx-asana. Does not mutate any Asana
 # data. Requires ASANA_TOKEN to be set.
 #
 # Usage: scripts/smoke.sh [path-to-binary]
-#   defaults to ./asana-cli
+#   defaults to ./dx-asana
 
-BIN="${1:-./asana-cli}"
+BIN="${1:-./dx-asana}"
 
 if [[ -z "${ASANA_TOKEN:-}" ]]; then
   echo "ASANA_TOKEN not set"
@@ -30,10 +30,10 @@ assert_json_success() {
   pass "$label"
 }
 
-echo "asana-cli smoke (read-only)"
+echo "dx-asana smoke (read-only)"
 
 OUT=$("$BIN" --version)
-[[ "$OUT" =~ ^asana-cli\ version ]] && pass "--version" || fail "--version" "$OUT"
+[[ "$OUT" =~ ^dx-asana\ version ]] && pass "--version" || fail "--version" "$OUT"
 
 OUT=$("$BIN" me --json 2>/dev/null)
 assert_json_success "me --json" "$OUT"

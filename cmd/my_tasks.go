@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/TheCoolRobot/asana-cli/internal/asana"
-	"github.com/TheCoolRobot/asana-cli/internal/ui"
+	"github.com/deepgram/dx-asana/internal/asana"
+	"github.com/deepgram/dx-asana/internal/ui"
 	"github.com/spf13/cobra"
 )
 

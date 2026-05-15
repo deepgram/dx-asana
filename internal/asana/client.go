@@ -31,7 +31,7 @@ func NewClient(apiToken string) *Client {
 	return &Client{
 		apiToken:  apiToken,
 		baseURL:   defaultBaseURL,
-		userAgent: "asana-cli/dev (+https://github.com/TheCoolRobot/asana-cli)",
+		userAgent: "dx-asana/dev (+https://github.com/deepgram/dx-asana)",
 		http:      &http.Client{},
 	}
 }
