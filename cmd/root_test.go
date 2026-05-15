@@ -9,7 +9,7 @@ func TestRootCommandExists(t *testing.T) {
 		t.Error("rootCmd is nil")
 	}
 
-	if rootCmd.Use != "asana-cli" {
+	if rootCmd.Use != "dx-asana" {
 		t.Errorf("unexpected command name: %s", rootCmd.Use)
 	}
 }

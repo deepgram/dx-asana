@@ -23,7 +23,7 @@ type Config struct {
 
 func GetConfigPath() string {
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".asana-cli", "config.json")
+	return filepath.Join(home, ".dx-asana", "config.json")
 }
 
 func Load() (*Config, error) {

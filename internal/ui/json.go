@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/TheCoolRobot/asana-cli/internal/asana"
+	"github.com/deepgram/dx-asana/internal/asana"
 )
 
 // JSONOutput is the envelope every --json command writes to stdout.

@@ -7,8 +7,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/TheCoolRobot/asana-cli/internal/asana"
-	"github.com/TheCoolRobot/asana-cli/internal/config"
+	"github.com/deepgram/dx-asana/internal/asana"
+	"github.com/deepgram/dx-asana/internal/config"
 )
 
 type TaskListItem struct {

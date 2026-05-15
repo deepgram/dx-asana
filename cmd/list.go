@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/TheCoolRobot/asana-cli/internal/asana"
-	"github.com/TheCoolRobot/asana-cli/internal/config"
-	"github.com/TheCoolRobot/asana-cli/internal/ui"
+	"github.com/deepgram/dx-asana/internal/asana"
+	"github.com/deepgram/dx-asana/internal/config"
+	"github.com/deepgram/dx-asana/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +32,7 @@ var listCmd = &cobra.Command{
 			cfg, _ := config.Load()
 			currentProj := cfg.GetCurrentProject()
 			if currentProj == nil {
-				return fmt.Errorf("no project ID provided and no current project set. Use: asana-cli list <project-id> or asana-cli config project switch <name>")
+				return fmt.Errorf("no project ID provided and no current project set. Use: dx-asana list <project-id> or dx-asana config project switch <name>")
 			}
 			projectGID = currentProj.ProjectID
 		}

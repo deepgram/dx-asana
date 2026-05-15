@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/TheCoolRobot/asana-cli/internal/asana"
-	"github.com/TheCoolRobot/asana-cli/internal/ui"
+	"github.com/deepgram/dx-asana/internal/asana"
+	"github.com/deepgram/dx-asana/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -25,8 +25,8 @@ var createCmd = &cobra.Command{
 	Short: "Create a new task",
 	Long: `Create a new task in a project, or as a subtask of an existing task.
 
-  asana-cli create <project-gid> --name "..."
-  asana-cli create --parent <task-gid> --name "Subtask"   # project-id not required`,
+  dx-asana create <project-gid> --name "..."
+  dx-asana create --parent <task-gid> --name "Subtask"   # project-id not required`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if taskName == "" {

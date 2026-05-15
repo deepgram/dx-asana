@@ -77,9 +77,9 @@ fi
 
 echo -e "${GREEN}✨ Release $VERSION initiated!${NC}"
 echo ""
-echo -e "${GREEN}GitHub Actions will now build and publish to Homebrew.${NC}"
+echo -e "${GREEN}GitHub Actions will now build and attach binaries to the release.${NC}"
 echo ""
-echo "Check progress at: https://github.com/TheCoolRobot/asana-cli/actions"
+echo "Check progress at: https://github.com/deepgram/dx-asana/actions"
 echo ""
-echo -e "${YELLOW}When ready, users can install with:${NC}"
-echo "  brew install TheCoolRobot/asana-cli/asana-cli"
+echo -e "${YELLOW}Homebrew distribution is paused while the fork settles — install from source for now:${NC}"
+echo "  git clone https://github.com/deepgram/dx-asana.git && cd dx-asana && make install"

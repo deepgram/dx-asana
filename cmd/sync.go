@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"strings"
 
-	"github.com/TheCoolRobot/asana-cli/internal/syncdaemon"
+	"github.com/deepgram/dx-asana/internal/syncdaemon"
 	"github.com/spf13/cobra"
 )
 

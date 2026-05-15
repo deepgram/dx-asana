@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/TheCoolRobot/asana-cli/internal/asana"
+	"github.com/deepgram/dx-asana/internal/asana"
 )
 
 type CacheMetadata struct {

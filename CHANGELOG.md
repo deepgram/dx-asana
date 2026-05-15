@@ -2,8 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+Entries prior to the `dx-asana` rebrand cover the upstream project (`Pkill-MyDaemons/asana-cli`, originally `TheCoolRobot/asana-cli`) that this fork is descended from. See the [README](README.md#acknowledgements) for the fork lineage.
 
 ## [Unreleased]
+
+### Changed (fork rebrand)
+- Forked from `Pkill-MyDaemons/asana-cli` and rebranded as `dx-asana` under the Deepgram DX team. Module path is now `github.com/deepgram/dx-asana`, the binary is `dx-asana`, and config lives at `~/.dx-asana/config.json` (was `~/.asana-cli/`). See [`docs/INSTALLATION.md`](docs/INSTALLATION.md#migrating-from-the-upstream-asana-cli) for migration.
+- `User-Agent` is now `dx-asana/<version> (+https://github.com/deepgram/dx-asana)`.
+- LICENSE retains the original `TheCoolRobot` copyright and adds Deepgram's copyright for fork modifications.
+- Homebrew distribution removed for now; install from source via `make install`. Tap will be re-introduced once release cadence settles.
 
 ### Fixed
 - Schema mismatches with Asana's actual API. `User.photo` is now an
@@ -51,7 +58,7 @@ All notable changes to this project will be documented in this file.
   arg becomes optional in that mode.
 - `--fields` / `--limit` / `--assignee` / `--project` /
   `--completed` flags on `search`.
-- `User-Agent: asana-cli/<version>` header on every API request.
+- `User-Agent: dx-asana/<version>` header on every API request.
 - `make smoke` target and `scripts/smoke.sh` for read-only
   end-to-end verification.
 

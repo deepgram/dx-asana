@@ -1,4 +1,5 @@
 # Binaries
+dx-asana
 asana-cli
 *.exe
 *.dll
@@ -8,6 +9,7 @@ asana-cli
 # Cache and config
 .asana-cache/
 .asana-cli/
+.dx-asana/
 
 # Environment
 .env
