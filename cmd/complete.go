@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
-	"github.com/spf13/cobra"
 	"github.com/TheCoolRobot/asana-cli/internal/asana"
 	"github.com/TheCoolRobot/asana-cli/internal/ui"
+	"github.com/spf13/cobra"
 )
 
 var completeCmd = &cobra.Command{
@@ -21,14 +22,14 @@ var completeCmd = &cobra.Command{
 			if jsonOutput {
 				ui.PrintJSON(nil, err)
 			} else {
-				fmt.Println("Error:", err)
+				fmt.Fprintln(os.Stderr, "Error:", err)
 			}
 			return err
 		}
 
 		if jsonOutput {
 			meta := map[string]interface{}{
-				"action": "completed",
+				"action":  "completed",
 				"task_id": taskID,
 			}
 			ui.PrintJSONWithMeta(task, meta, nil)

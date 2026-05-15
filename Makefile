@@ -1,13 +1,13 @@
-.PHONY: help build run test lint fmt clean install deps release
+.PHONY: help build run test smoke lint fmt clean install deps release
 
 VERSION ?= $(shell git describe --tags --always --dirty)
 COMMIT := $(shell git rev-parse --short HEAD)
 BUILD_DATE := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 
 LDFLAGS := -ldflags "\
-	-X main.Version=$(VERSION) \
-	-X main.Commit=$(COMMIT) \
-	-X main.Date=$(BUILD_DATE)"
+	-X github.com/TheCoolRobot/asana-cli/cmd.Version=$(VERSION) \
+	-X github.com/TheCoolRobot/asana-cli/cmd.Commit=$(COMMIT) \
+	-X github.com/TheCoolRobot/asana-cli/cmd.Date=$(BUILD_DATE)"
 
 help:
 	@echo "asana-cli - Asana CLI with TUI and sync daemon"
@@ -34,6 +34,9 @@ run:
 
 test:
 	go test -v ./...
+
+smoke: build
+	./scripts/smoke.sh ./asana-cli
 
 lint:
 	golangci-lint run ./...

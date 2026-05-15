@@ -2,18 +2,21 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"strings"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/TheCoolRobot/asana-cli/internal/asana"
 	"github.com/TheCoolRobot/asana-cli/internal/config"
 	"github.com/TheCoolRobot/asana-cli/internal/ui"
+	"github.com/spf13/cobra"
 )
 
 var (
 	filterCompleted bool
 	filterAssignee  string
 	filterTag       string
+	listFields      string
 )
 
 var listCmd = &cobra.Command{
@@ -23,7 +26,6 @@ var listCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		projectGID := ""
 
-		// Use provided project ID, or fall back to current project
 		if len(args) > 0 {
 			projectGID = args[0]
 		} else {
@@ -37,20 +39,25 @@ var listCmd = &cobra.Command{
 
 		client := asana.NewClient(token)
 
-		filters := make(map[string]string)
+		opts := []asana.Option{}
+		if listFields != "" {
+			opts = append(opts, asana.WithOptFields(splitFields(listFields)...))
+		} else {
+			opts = append(opts, asana.WithOptFields(asana.DefaultTaskListFields...))
+		}
 		if filterCompleted {
-			filters["completed_since"] = "now"
+			opts = append(opts, asana.WithCompletedSince("now"))
 		}
 		if filterAssignee != "" {
-			filters["assignee"] = filterAssignee
+			opts = append(opts, asana.WithAssignee(filterAssignee))
 		}
 
-		tasks, err := client.GetTasks(projectGID, filters)
+		tasks, err := client.GetTasks(projectGID, opts...)
 		if err != nil {
 			if jsonOutput {
 				ui.PrintJSON(nil, err)
 			} else {
-				fmt.Println("Error:", err)
+				fmt.Fprintln(os.Stderr, "Error:", err)
 			}
 			return err
 		}
@@ -86,4 +93,17 @@ func init() {
 	listCmd.Flags().BoolVar(&filterCompleted, "completed", false, "Show only completed tasks")
 	listCmd.Flags().StringVar(&filterAssignee, "assignee", "", "Filter by assignee ID")
 	listCmd.Flags().StringVar(&filterTag, "tag", "", "Filter by tag")
+	listCmd.Flags().StringVar(&listFields, "fields", "", "Comma-separated opt_fields (overrides default)")
+}
+
+func splitFields(s string) []string {
+	parts := strings.Split(s, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
 }

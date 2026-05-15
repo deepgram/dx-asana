@@ -2,11 +2,14 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
-	"github.com/spf13/cobra"
 	"github.com/TheCoolRobot/asana-cli/internal/asana"
 	"github.com/TheCoolRobot/asana-cli/internal/ui"
+	"github.com/spf13/cobra"
 )
+
+var viewFields string
 
 var viewCmd = &cobra.Command{
 	Use:   "view [task-id]",
@@ -16,12 +19,19 @@ var viewCmd = &cobra.Command{
 		taskGID := args[0]
 		client := asana.NewClient(token)
 
-		task, err := client.GetTask(taskGID)
+		opts := []asana.Option{}
+		if viewFields != "" {
+			opts = append(opts, asana.WithOptFields(splitFields(viewFields)...))
+		} else {
+			opts = append(opts, asana.WithOptFields(asana.DefaultTaskFields...))
+		}
+
+		task, err := client.GetTask(taskGID, opts...)
 		if err != nil {
 			if jsonOutput {
 				ui.PrintJSON(nil, err)
 			} else {
-				fmt.Println("Error:", err)
+				fmt.Fprintln(os.Stderr, "Error:", err)
 			}
 			return err
 		}
@@ -31,12 +41,12 @@ var viewCmd = &cobra.Command{
 		} else {
 			fmt.Printf("📋 %s\n", task.Name)
 			fmt.Printf("   GID: %s\n", task.GID)
-			fmt.Printf("   Status: %v\n", task.Completed)
-			if task.DueDate != nil && !task.DueDate.IsZero() {
-				fmt.Printf("   Due: %s\n", task.DueDate.Format("2006-01-02"))
+			fmt.Printf("   Completed: %v\n", task.Completed)
+			if task.DueOn != nil && !task.DueOn.IsZero() {
+				fmt.Printf("   Due: %s\n", task.DueOn.Format("2006-01-02"))
 			}
-			if task.Description != "" {
-				fmt.Printf("   Description: %s\n", task.Description)
+			if task.Notes != "" {
+				fmt.Printf("   Notes: %s\n", task.Notes)
 			}
 			if task.Assignee != nil {
 				fmt.Printf("   Assigned to: %s\n", task.Assignee.Name)
@@ -51,8 +61,15 @@ var viewCmd = &cobra.Command{
 				}
 				fmt.Printf("\n")
 			}
+			if task.PermalinkURL != "" {
+				fmt.Printf("   Link: %s\n", task.PermalinkURL)
+			}
 		}
 
 		return nil
 	},
+}
+
+func init() {
+	viewCmd.Flags().StringVar(&viewFields, "fields", "", "Comma-separated opt_fields (overrides default)")
 }

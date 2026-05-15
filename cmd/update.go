@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
-	"github.com/spf13/cobra"
 	"github.com/TheCoolRobot/asana-cli/internal/asana"
 	"github.com/TheCoolRobot/asana-cli/internal/ui"
+	"github.com/spf13/cobra"
 )
 
 var (
@@ -22,14 +23,25 @@ var updateCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		taskGID := args[0]
+		if err := validateDueDate(updateDueDate); err != nil {
+			if jsonOutput {
+				ui.PrintJSON(nil, err)
+			} else {
+				fmt.Fprintln(os.Stderr, "Error:", err)
+			}
+			return err
+		}
 		client := asana.NewClient(token)
 
 		req := &asana.TaskUpdateRequest{
-			Name:        updateName,
-			Description: updateDescription,
-			Assignee:    updateAssignee,
-			DueOn:       updateDueDate,
-			Priority:    updatePriority,
+			Name:     updateName,
+			Notes:    updateDescription,
+			Assignee: updateAssignee,
+			DueOn:    updateDueDate,
+		}
+
+		if updatePriority != "" && !jsonOutput {
+			fmt.Println("⚠ --priority is not yet supported (Asana priority is a custom_field; coming in a later release)")
 		}
 
 		task, err := client.UpdateTask(taskGID, req)
@@ -37,7 +49,7 @@ var updateCmd = &cobra.Command{
 			if jsonOutput {
 				ui.PrintJSON(nil, err)
 			} else {
-				fmt.Println("Error:", err)
+				fmt.Fprintln(os.Stderr, "Error:", err)
 			}
 			return err
 		}
@@ -58,8 +70,8 @@ var updateCmd = &cobra.Command{
 
 func init() {
 	updateCmd.Flags().StringVar(&updateName, "name", "", "New task name")
-	updateCmd.Flags().StringVar(&updateDescription, "description", "", "New task description")
+	updateCmd.Flags().StringVar(&updateDescription, "description", "", "New task description (mapped to Asana 'notes')")
 	updateCmd.Flags().StringVar(&updateAssignee, "assignee", "", "New assignee user GID")
 	updateCmd.Flags().StringVar(&updateDueDate, "due", "", "New due date (YYYY-MM-DD)")
-	updateCmd.Flags().StringVar(&updatePriority, "priority", "", "New priority (1=high, 2=medium, 3=low)")
+	updateCmd.Flags().StringVar(&updatePriority, "priority", "", "New priority (not yet supported; see warning at runtime)")
 }
