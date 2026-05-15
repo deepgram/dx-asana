@@ -149,7 +149,7 @@ func (m Model) updateTaskMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 
 	case "s":
-		m.toggleSort()
+		m = m.toggleSort()
 
 	case "p":
 		m.mode = "projects"
@@ -243,9 +243,12 @@ func (m Model) updateProjectMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if m.projectCursor < len(m.projects) {
 			selectedProject := m.projects[m.projectCursor]
 			cfg, _ := config.Load()
-			cfg.SetCurrentProject(selectedProject.Name)
-			m.currentProject = selectedProject.Name
-			m.message = fmt.Sprintf("✓ Switched to: %s", selectedProject.Name)
+			if err := cfg.SetCurrentProject(selectedProject.Name); err != nil {
+				m.message = fmt.Sprintf("✗ Failed to switch: %v", err)
+			} else {
+				m.currentProject = selectedProject.Name
+				m.message = fmt.Sprintf("✓ Switched to: %s", selectedProject.Name)
+			}
 			m.mode = "tasks"
 		}
 	}
@@ -321,7 +324,7 @@ func (m Model) updateAddMode(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m Model) toggleSort() {
+func (m Model) toggleSort() Model {
 	switch m.sortBy {
 	case "name":
 		m.sortBy = "due_date"
@@ -333,6 +336,7 @@ func (m Model) toggleSort() {
 		m.sortBy = "name"
 		m.message = "Sorting by: Name"
 	}
+	return m
 }
 
 func (m Model) View() string {

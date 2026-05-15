@@ -26,7 +26,7 @@ func TestNewClient(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			client := NewClient(tt.token)
 			if client == nil {
-				t.Error("NewClient returned nil")
+				t.Fatal("NewClient returned nil")
 			}
 			if client.baseURL != "https://app.asana.com/api/1.0" {
 				t.Errorf("unexpected baseURL: %s", client.baseURL)

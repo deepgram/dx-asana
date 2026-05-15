@@ -117,6 +117,6 @@ func init() {
 	createCmd.Flags().StringVar(&taskSection, "section", "", "Section GID")
 	createCmd.Flags().StringVar(&taskParent, "parent", "", "Parent task GID (creates a subtask; project arg is ignored when set)")
 	if err := createCmd.MarkFlagRequired("name"); err != nil {
-		log.Fatalf(err.Error())
+		log.Fatal(err)
 	}
 }

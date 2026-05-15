@@ -13,7 +13,6 @@ var (
 	setToken     string
 	setWorkspace string
 	setName      string
-	setProjectID string
 	setDesc      string
 )
 

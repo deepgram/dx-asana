@@ -12,7 +12,7 @@ func TestLoad(t *testing.T) {
 	}
 
 	if cfg == nil {
-		t.Error("Load returned nil config")
+		t.Fatal("Load returned nil config")
 	}
 
 	if cfg.Projects == nil {
@@ -71,8 +71,12 @@ func TestSetCurrentProject(t *testing.T) {
 		Projects: make(map[string]ProjectConfig),
 	}
 
-	cfg.AddProject("proj1", "id-1", "", "")
-	cfg.AddProject("proj2", "id-2", "", "")
+	if err := cfg.AddProject("proj1", "id-1", "", ""); err != nil {
+		t.Fatalf("AddProject proj1 failed: %v", err)
+	}
+	if err := cfg.AddProject("proj2", "id-2", "", ""); err != nil {
+		t.Fatalf("AddProject proj2 failed: %v", err)
+	}
 
 	err := cfg.SetCurrentProject("proj2")
 	if err != nil {
@@ -101,8 +105,12 @@ func TestRemoveProject(t *testing.T) {
 		CurrentProject: "proj1",
 	}
 
-	cfg.AddProject("proj1", "id-1", "", "")
-	cfg.AddProject("proj2", "id-2", "", "")
+	if err := cfg.AddProject("proj1", "id-1", "", ""); err != nil {
+		t.Fatalf("AddProject proj1 failed: %v", err)
+	}
+	if err := cfg.AddProject("proj2", "id-2", "", ""); err != nil {
+		t.Fatalf("AddProject proj2 failed: %v", err)
+	}
 
 	err := cfg.RemoveProject("proj1")
 	if err != nil {
@@ -124,12 +132,16 @@ func TestGetCurrentProject(t *testing.T) {
 		Projects: make(map[string]ProjectConfig),
 	}
 
-	cfg.AddProject("active", "proj-123", "", "")
-	cfg.SetCurrentProject("active")
+	if err := cfg.AddProject("active", "proj-123", "", ""); err != nil {
+		t.Fatalf("AddProject failed: %v", err)
+	}
+	if err := cfg.SetCurrentProject("active"); err != nil {
+		t.Fatalf("SetCurrentProject failed: %v", err)
+	}
 
 	proj := cfg.GetCurrentProject()
 	if proj == nil {
-		t.Error("GetCurrentProject returned nil")
+		t.Fatal("GetCurrentProject returned nil")
 	}
 
 	if proj.Name != "active" {
@@ -142,8 +154,12 @@ func TestListProjects(t *testing.T) {
 		Projects: make(map[string]ProjectConfig),
 	}
 
-	cfg.AddProject("proj1", "id-1", "", "")
-	cfg.AddProject("proj2", "id-2", "", "")
+	if err := cfg.AddProject("proj1", "id-1", "", ""); err != nil {
+		t.Fatalf("AddProject proj1 failed: %v", err)
+	}
+	if err := cfg.AddProject("proj2", "id-2", "", ""); err != nil {
+		t.Fatalf("AddProject proj2 failed: %v", err)
+	}
 
 	projects := cfg.ListProjects()
 	if len(projects) != 2 {
